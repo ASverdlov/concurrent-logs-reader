@@ -1,4 +1,5 @@
 #include "log_parser.h"
+#include "action.h"
 
 #include <boost/optional.hpp>
 
@@ -60,7 +61,7 @@ bool LogParser::ReadPropertiesKeyAndValue() {
   string suffix = key.substr(4);
   int property_id = stoi(suffix);
   --property_id; // Start from 0
-  assert( 0 <= property_id && property_id < 10 );
+  assert( 0 <= property_id && property_id < Action::NUM_PROPERTIES );
 
   ReadCharacter(':');
 
@@ -110,7 +111,7 @@ void LogParser::ReadJson() {
   Action action;
   {
     /* Fill in present action fields */
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < Action::NUM_PROPERTIES; ++i) {
       assert(CurrentAction.Properties[i] && "All 10 properties must be provided in JSON");
       action.Properties[i] = CurrentAction.Properties[i].value();
     }

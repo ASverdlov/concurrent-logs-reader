@@ -19,7 +19,7 @@ private:
     boost::optional<uint32_t> Timestamp;
     boost::optional<std::string> Name;
     boost::optional<uint32_t> ActorId;
-    boost::optional<int> Properties[10];
+    boost::optional<int> Properties[Action::NUM_PROPERTIES];
   };
 
   enum FailType {
