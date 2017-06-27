@@ -10,55 +10,62 @@ Trie::Trie()
 { 
 }
 
-size_t Trie::NewNode() {
+inline Trie::Node* Trie::NewNode() {
   Nodes.push_back(Node{});
-  return Nodes.size() - 1u;
+  return &Nodes.back();
+}
+
+inline Trie::Node* Trie::RootNode() {
+  return &Nodes.front();
+}
+
+inline const Trie::Node* Trie::RootNode() const {
+  return &Nodes.front();
 }
 
 void Trie::Add(const Key& record) {
-  std::lock_guard<std::mutex> nodes_lock(NodesMtx);
+  auto* node = RootNode();
 
-  size_t v = 0;
   for (int level = 0; level < DEPTH; ++level) {
     int edge = record[level];
-
-    if (!Nodes[v].Next.count(edge))
-      Nodes[v].Next[edge] = NewNode();
-    v = Nodes[v].Next[edge];
+    {
+      std::lock_guard<std::mutex> nodes_add_lock(NodesAddMtx);
+      if (!node->Next.count(edge))
+        node->Next[edge] = NewNode();
+    }
+    node = node->Next[edge];
   }
 
-  ++Nodes[v].Counter;
+  ++(node->Counter);
 }
 
 Trie::Value Trie::Get(const Key& record) const {
-  std::lock_guard<std::mutex> nodes_lock(NodesMtx);
-
-  size_t v = 0;
+  auto* node = RootNode();
   for (int level = 0; level < DEPTH; ++level) {
     int edge = record[level];
-    v = Nodes[v].Next.at(edge);
+    node = node->Next.at(edge);
   }
-  return Nodes[v].Counter;
+  return node->Counter;
 }
 
-void Trie::Traverse(int current_vertex, size_t level, 
+void Trie::Traverse(const Node* node, size_t level, 
                     Key& key, OnRecordCallback OnRecord) const {
-  const auto& node = Nodes[current_vertex];
-
   if (level == DEPTH) {
-    OnRecord(key, node.Counter);
+    OnRecord(key, node->Counter);
     return;
   }
-  for (auto& p : node.Next) {
+  for (auto& p : node->Next) {
     int edge = p.first;
-    size_t next_vertex = p.second;
+    auto* next_node = p.second;
 
     key[level] = edge;
-    Traverse(next_vertex, level + 1, key, OnRecord);
+    Traverse(next_node, level + 1, key, OnRecord);
   }
 }
 
 void Trie::Traverse(OnRecordCallback OnRecord) const {
+  std::lock_guard<std::mutex> nodes_add_lock(NodesAddMtx);
+
   Key key;
-  Traverse(ROOT_VERTEX, 0u, key, OnRecord);
+  Traverse(RootNode(), 0u, key, OnRecord);
 }

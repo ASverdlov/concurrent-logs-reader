@@ -4,9 +4,9 @@
 #include "action.h"
 
 #include <atomic>
+#include <list>
 #include <mutex>
 #include <unordered_map>
-#include <vector>
 
 /*
  * TRIE data structure implementation.
@@ -17,18 +17,12 @@
  * tree. For each leaf the array of numbers written on edges from ROOT_VERTEX
  * down to it is the *key*. The counter inside leaf is the *value*.
  *
- * Advantage over std::map is insert complexity: O(1) vs O(log(n)).
- * Advantage over std::unordered_map is space efficiency.
- *
- * Possible improvements:
- * ---------------------
- * std::vector only allows for multiple reads or single write.
- * We could write our own lock-free container to store nodes in.
+ * Insert complexity: O(1)
  */
 
 class Trie {
 public:
-  static constexpr size_t DEPTH = 10;
+  static constexpr size_t DEPTH = Action::NUM_PROPERTIES;
 
   using Key = std::array<int, DEPTH>;
   using Value = unsigned;
@@ -49,20 +43,21 @@ public:
 
 private:
   struct Node {
-    std::unordered_map<int, size_t> Next; /* Next node by edge value */
+    std::unordered_map<int, Node*> Next; /* Next node by edge value */
     unsigned Counter;
   };
 
 private:
-  static constexpr size_t ROOT_VERTEX = 0;
+  inline Node* RootNode();
+  inline const Node* RootNode() const;
 
-  void Traverse(int current_vertex, size_t level,
+  void Traverse(const Node* node, size_t level,
                 Key& path_array, OnRecordCallback OnRecord) const;
 
-  size_t NewNode();
+  inline Node* NewNode();
 
-  mutable std::mutex NodesMtx;
-  std::vector<Node> Nodes;
+  mutable std::mutex NodesAddMtx;
+  std::list<Node> Nodes;
 };
 
 #endif
