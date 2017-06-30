@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
 
   if (config.JobsNum == -1)
     config.JobsNum = std::thread::hardware_concurrency();
+  cout << "# of processors in use: " << config.JobsNum << endl;
 
   for (size_t i = 1; i <= config.FilesNum; ++i)
     CheckFileExists(Filename(config.Directory, i));
@@ -58,9 +59,9 @@ int main(int argc, char* argv[]) {
   Trie actions_aggregator;
 
   vector<thread> workers(config.JobsNum);
-  for (size_t id = 1; id <= config.JobsNum; ++id)
-    workers[id] = thread(ParseSliceOfFiles, id, ref(config), ref(actions_aggregator));
-  for (size_t id = 1; id <= config.JobsNum; ++id)
+  for (size_t id = 0; id < config.JobsNum; ++id)
+    workers[id] = thread(ParseSliceOfFiles, id + 1, ref(config), ref(actions_aggregator));
+  for (size_t id = 0; id < config.JobsNum; ++id)
     workers[id].join();
 
   /* Output */
