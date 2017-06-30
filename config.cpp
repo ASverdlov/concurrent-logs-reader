@@ -17,12 +17,12 @@ void Config::ParseOptions(int argc, char* argv[]) {
   optional_desc.add_options()
       ("help,h", "produce help message")
       ("output_file,o", po::value<std::string>(&OutputFile)->default_value("agr.txt"), "output file")
+      ("jobs,j", po::value<unsigned>(&JobsNum)->default_value(-1), "threads number")
   ;
 
   po::options_description required_desc("Required options");
   required_desc.add_options()
       ("path,p", po::value<std::string>(&Directory)->required(), "directory with logs")
-      ("jobs,j", po::value<unsigned>(&JobsNum)->required(), "threads number")
       ("count,c", po::value<unsigned>(&FilesNum)->required(), "logs number")
   ;
 

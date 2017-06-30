@@ -6,6 +6,7 @@
 #include <boost/filesystem.hpp>
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -15,6 +16,7 @@ namespace fs = boost::filesystem;
 
 using std::cout;
 using std::endl;
+using std::ofstream;
 using std::ref;
 using std::string;
 using std::to_string;
@@ -65,13 +67,14 @@ int main(int argc, char* argv[]) {
     workers[id].join();
 
   /* Output */
-  auto Outputer = [](const Trie::Key& key, Trie::Value value) {
-    cout << "Record ";
+  auto output_file = ofstream(config.OutputFile);
+  auto StatisticsSaver = [&](const Trie::Key& key, Trie::Value value) {
+    output_file << "Properties: ";
     for (int x : key)
-      cout << x << ' ';
-    cout << "\nCount: " << value << '\n';
+      output_file << x << ' ';
+    output_file << "\nCount: " << value << '\n';
   };
-  actions_aggregator.Traverse(Outputer);
+  actions_aggregator.Traverse(StatisticsSaver);
 
   return EXIT_SUCCESS;
 }
